@@ -1,7 +1,7 @@
 require 'csv'
 
-# Loads the Dictionary and generate a random word
-module Dictionary
+# Generate random word
+module WordGenerator
   def random_word_gen(dictionary)
     new_dictionary = []
     dictionary.each do |word|
@@ -11,12 +11,21 @@ module Dictionary
     end
     new_dictionary.sample
   end
+end
 
-  contents = CSV.open('dictionary.csv')
-  dictionary = []
-  contents.each do |word|
-    word = word[0]
-    dictionary.push(word)
+# Creates dictionary
+class Dictionary
+  attr_accessor :dictionary
+
+  CONTENT = CSV.open('dictionary.csv')
+
+  def load_dictionary
+    @dictionary = []
+    CONTENT.each do |word|
+      word = word[0]
+      dictionary.push(word)
+    end
+    @dictionary
   end
 end
 
@@ -91,12 +100,12 @@ class Graphics
   end
 
   def hanging_the_stick(incorrect_letter, incorrect_count)
-
+  end
 end
 
 # Start the game
 class Hangman
-  include Dictionary
+  include WordGenerator
   attr_accessor :letter, :word
 
   @incorrect_count = 0
@@ -104,7 +113,8 @@ class Hangman
   def initialize
     @letter = letter
     @used_letter = []
-    @word = random_word_gen.downcase # Generate random word from dictionary
+    @word_list = Dictionary.new
+    @word = random_word_gen(@word_list.load_dictionary).downcase # Generate random word from dictionary
     @game = Graphics.new(@word) # Place the word to the placeholder
     play_game
   end
@@ -144,21 +154,21 @@ class Hangman
 
   def check_char_index(letter)
     @char_hash = {}
-    dupe_counter = 0
     @word.each_char.with_index do |char, index|
       if letter == char
         @char_hash[index] = char
-        ++dupe_counter
       end
     end
-    if dupe_counter == 1
-      single_char_register
-    else
-      multi_char_register
-    end
+    @char_hash.each_pair {|index, char|
+      @game.change_placeholder_display(char, index)
+    }
+  end
+
+  def hang_the_stick(letter)
   end
 end
 
+Hangman.new
 # For each letter used by player, it goes through the word array
 # If guessed correctly, replace placeholder with corresponding letter from array
 # Iterate letter count and guesses remaining
