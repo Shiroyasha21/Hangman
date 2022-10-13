@@ -31,6 +31,7 @@ end
 
 # Create the placeholder for the word, the letter count, and guessed remaining
 class Graphics
+  attr_accessor :tiles
 
   def initialize(word)
     @word = word
@@ -90,7 +91,7 @@ class Graphics
 
   def change_placeholder_display(correct_letter, index)
     @tiles.map! do |row|
-      row.each_with_index do |char, tile_index|
+      row.each_with_index do |_char, tile_index|
         if index == tile_index
           row[tile_index] = correct_letter
         end
@@ -100,6 +101,8 @@ class Graphics
   end
 
   def hanging_the_stick(incorrect_letter, incorrect_count)
+    guessed_letters(incorrect_letter)
+    stickman_progress(incorrect_count)
   end
 end
 
@@ -108,7 +111,7 @@ class Hangman
   include WordGenerator
   attr_accessor :letter, :word
 
-  @incorrect_count = 0
+  @@incorrect_count = 0
 
   def initialize
     @letter = letter
@@ -120,17 +123,16 @@ class Hangman
   end
 
   def play_game
-    until guess_correctly == true || incorrect_count == 5
+    until @guess_correctly == true || @@incorrect_count == 5
       take_player_guess
       check_for_win
-      check_for_gameover
     end
   end
 
   def take_player_guess
     puts 'Take a guess...'
 
-    @letter_input = gets.chomp.to_s
+    @letter_input = gets.chomp.to_s.downcase
     check_letter
 
     register_letter(@letter_input)
@@ -165,6 +167,18 @@ class Hangman
   end
 
   def hang_the_stick(letter)
+    @@incorrect_count += 1
+
+    @game.hanging_the_stick(letter, @@incorrect_count)
+  end
+
+  # Game check
+  def check_for_win
+    if @game.tiles.any?('_')
+      @guess_correctly = true
+    else
+      false
+    end
   end
 end
 
