@@ -56,8 +56,8 @@ class Graphics
     guessed_letters('')
   end
 
-  def stickman_progress(guess_count)
-    case guess_count
+  def stickman_progress(incorrect_count)
+    case incorrect_count
     when 1
       @stick_array[0] = '0'
     when 3
@@ -73,29 +73,92 @@ class Graphics
     display_game
   end
 
-  def guessed_letters(letter)
-    @letter_str.concat(letter)
+  def guessed_letters(incorrect_letter)
+    @letter_str.concat(incorrect_letter)
     puts ' ' * 12 + " #{@letter_str}
     "
   end
-end
 
-new = Graphics.new('What')
+  def change_placeholder_display(correct_letter, index)
+    @tiles.map! do |row|
+      row.each_with_index do |char, tile_index|
+        if index == tile_index
+          row[tile_index] = correct_letter
+        end
+      end
+    end
+    display_game
+  end
+
+  def hanging_the_stick(incorrect_letter, incorrect_count)
+
+end
 
 # Start the game
 class Hangman
   include Dictionary
   attr_accessor :letter, :word
 
+  @incorrect_count = 0
+
   def initialize
     @letter = letter
-    @word = random_word_gen
-    @game = Graphics.new(@word)
+    @used_letter = []
+    @word = random_word_gen.downcase # Generate random word from dictionary
+    @game = Graphics.new(@word) # Place the word to the placeholder
+    play_game
+  end
 
-# Generate random word from dictionary
-# Place the word to the placeholder
+  def play_game
+    until guess_correctly == true || incorrect_count == 5
+      take_player_guess
+      check_for_win
+      check_for_gameover
+    end
+  end
 
-# Let player guess
+  def take_player_guess
+    puts 'Take a guess...'
+
+    @letter_input = gets.chomp.to_s
+    check_letter
+
+    register_letter(@letter_input)
+  end
+
+  def check_letter
+    while @used_letter.any?(@letter_input) || @letter_input.match?(/\d+/) || @letter_input.length > 1
+      puts 'Invalid guess. Try again'
+      @letter_input = gets.chomp.to_s
+    end
+  end
+
+  def register_letter(letter_guessed)
+    @used_letter << letter_guessed
+    if @word.include? letter_guessed
+      check_char_index(letter_guessed)
+    else
+      hang_the_stick(letter_guessed)
+    end
+  end
+
+  def check_char_index(letter)
+    @char_hash = {}
+    dupe_counter = 0
+    @word.each_char.with_index do |char, index|
+      if letter == char
+        @char_hash[index] = char
+        ++dupe_counter
+      end
+    end
+    if dupe_counter == 1
+      single_char_register
+    else
+      multi_char_register
+    end
+  end
+end
+
 # For each letter used by player, it goes through the word array
 # If guessed correctly, replace placeholder with corresponding letter from array
 # Iterate letter count and guesses remaining
