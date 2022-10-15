@@ -1,4 +1,5 @@
 require 'csv'
+require 'json'
 
 # Generate random word
 module WordGenerator
@@ -31,14 +32,14 @@ end
 
 # Create the placeholder for the word, the letter count, and guessed remaining
 class Graphics
-  attr_accessor :tiles
+  attr_accessor :tiles, :letter_str, :stick_array
 
   def initialize(word)
     @word = word
     @word_count = @word.length
     @display = 'Guess: ' + ' ' * 8 + ('%1c ' * @word_count)
     @tiles = Array.new(1) { Array.new(@word_count) { '_' } }
-    @stick_array = [''] * 6
+    @stick_array = [' '] * 6
     @letter_str = ''
     display_game
   end
@@ -47,8 +48,8 @@ class Graphics
     puts "\e[H\e[2J"
     puts ' ' * 18 + 'Hangman!'
     puts "
-               |----------
-               |         |
+               |----------                Enter 1 to save your game
+               |         |                Enter 2 to load you game
                |         #{@stick_array[0]}
                |       #{@stick_array[3]}#{@stick_array[1]}#{@stick_array[2]}
                |        #{@stick_array[4]} #{@stick_array[5]}
@@ -131,12 +132,40 @@ class Hangman
   end
 
   def take_player_guess
-    puts "Take a guess..."
+    puts 'Take a guess...'
+    @next_input = false
 
     @letter_input = gets.chomp.to_s.downcase
-    check_letter
+    check_for_game_save
+    return if @next_input == true
 
+    check_letter
     register_letter(@letter_input)
+  end
+
+  def check_for_game_save
+    case @letter_input
+    when '1'
+      save_game
+      @next_input = true
+    when '2'
+      load_game
+      @next_input = true
+    end
+  end
+
+  def save_game
+    Dir.mkdir('save_files') unless Dir.exist?('save_files')
+    filename = 'save_files/save.json'
+
+    File.open(filename, 'w') do |file|
+      file.puts JSON.pretty_generate({ tiles: @game.tiles.to_json,
+                                       stick_array: @game.stick_array.to_json,
+                                       letter_array: @game.letter_str.to_json,
+                                       incorrect_count: @@incorrect_count.to_json,
+                                       used_letter: @used_letter.to_json,
+                                       correct_count: @correct_count.to_json })
+    end
   end
 
   def check_letter
