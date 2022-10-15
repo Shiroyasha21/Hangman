@@ -5,7 +5,7 @@ module WordGenerator
   def random_word_gen(dictionary)
     new_dictionary = []
     dictionary.each do |word|
-      if word.length > 4 && word.length < 13
+      if word.length > 4 && word.length < 16
         new_dictionary.push(word)
       end
     end
@@ -36,7 +36,7 @@ class Graphics
   def initialize(word)
     @word = word
     @word_count = @word.length
-    @display = 'Guess: ' + ' ' * 13 + ('%1c ' * @word_count)
+    @display = 'Guess: ' + ' ' * 8 + ('%1c ' * @word_count)
     @tiles = Array.new(1) { Array.new(@word_count) { '_' } }
     @stick_array = [''] * 6
     @letter_str = ''
@@ -109,13 +109,13 @@ end
 # Start the game
 class Hangman
   include WordGenerator
-  attr_accessor :letter, :word
+  attr_accessor :letter, :word, :correct_count
 
   @@incorrect_count = 0
 
   def initialize
-    @letter = letter
     @used_letter = []
+    @correct_count = 0
     @word_list = Dictionary.new
     @word = random_word_gen(@word_list.load_dictionary).downcase # Generate random word from dictionary
     @game = Graphics.new(@word) # Place the word to the placeholder
@@ -127,10 +127,11 @@ class Hangman
       take_player_guess
       check_for_win
     end
+    game_over
   end
 
   def take_player_guess
-    puts 'Take a guess...'
+    puts "Take a guess..."
 
     @letter_input = gets.chomp.to_s.downcase
     check_letter
@@ -163,6 +164,7 @@ class Hangman
     end
     @char_hash.each_pair {|index, char|
       @game.change_placeholder_display(char, index)
+      @correct_count += 1
     }
   end
 
@@ -170,15 +172,32 @@ class Hangman
     @@incorrect_count += 1
 
     @game.hanging_the_stick(letter, @@incorrect_count)
+    puts 'Incorrect guess!
+    '
   end
 
   # Game check
   def check_for_win
-    if @game.tiles.any?('_')
+    if @correct_count == @word.length
       @guess_correctly = true
     else
       false
     end
+  end
+
+  def game_over
+    if @guess_correctly == true
+      puts 'You guessed the word correctly! You win!'
+    else
+      show_word
+    end
+  end
+
+  def show_word
+    @word.each_char.with_index do |word_char, word_index|
+      @game.change_placeholder_display(word_char, word_index)
+    end
+    puts 'The stickman is dead. Game over!'
   end
 end
 
