@@ -1,8 +1,10 @@
 {
-  "tiles": "[[\"_\",\"_\",\"_\",\"l\",\"a\",\"_\",\"e\",\"l\",\"_\",\"_\",\"_\",\"a\"]]",
+  "tiles": "[[\"a\",\"s\",\"_\",\"_\",\"_\",\"_\"]]",
   "stick_array": "[\"0\",\"I\",\"-*\",\"*-\",\"/\",\" \"]",
-  "letter_array": "\"sntf\"",
+  "letter_array": "\"ntoi\"",
+  "display": "\"               %1c %1c %1c %1c %1c %1c \"",
   "incorrect_count": "4",
-  "used_letter": "[\"a\",\"e\",\"s\",\"n\",\"t\",\"l\",\"f\"]",
-  "correct_count": "5"
+  "used_letter": "[\"a\",\"n\",\"t\",\"s\",\"o\",\"i\"]",
+  "correct_count": "2",
+  "word": "\"ashley\""
 }

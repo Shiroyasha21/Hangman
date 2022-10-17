@@ -1,3 +1,5 @@
+# frozen_string_literal: false
+
 require 'csv'
 require 'json'
 
@@ -32,12 +34,12 @@ end
 
 # Create the placeholder for the word, the letter count, and guessed remaining
 class Graphics
-  attr_accessor :tiles, :letter_str, :stick_array
+  attr_accessor :tiles, :letter_str, :stick_array, :display
 
   def initialize(word)
     @word = word
     @word_count = @word.length
-    @display = 'Guess: ' + ' ' * 8 + ('%1c ' * @word_count)
+    @display = ' ' * 15 + ('%1c ' * @word_count)
     @tiles = Array.new(1) { Array.new(@word_count) { '_' } }
     @stick_array = [' '] * 6
     @letter_str = ''
@@ -49,11 +51,11 @@ class Graphics
     puts ' ' * 18 + 'Hangman!'
     puts "
                |----------                Enter 1 to save your game
-               |         |                Enter 2 to load you game
+               |         |                Enter 2 to load your game
                |         #{@stick_array[0]}
                |       #{@stick_array[3]}#{@stick_array[1]}#{@stick_array[2]}
                |        #{@stick_array[4]} #{@stick_array[5]}
-               |
+               |\__
                "
   end
 
@@ -86,7 +88,7 @@ class Graphics
 
   def guessed_letters(incorrect_letter)
     @letter_str.concat(incorrect_letter)
-    puts ' ' * 12 + " #{@letter_str}
+    puts 'Incorrect guesses: ' + " [  #{@letter_str}  ]
     "
   end
 
@@ -110,7 +112,7 @@ end
 # Start the game
 class Hangman
   include WordGenerator
-  attr_accessor :letter, :word, :correct_count
+  attr_accessor :letter, :word, :correct_count, :word_list
 
   @@incorrect_count = 0
 
@@ -119,16 +121,42 @@ class Hangman
     @correct_count = 0
     @word_list = Dictionary.new
     @word = random_word_gen(@word_list.load_dictionary).downcase # Generate random word from dictionary
-    @game = Graphics.new(@word) # Place the word to the placeholder
-    play_game
+    load_or_new_game
   end
 
   def play_game
+    @game = Graphics.new(@word)
+    if @old_game == true
+      load_game
+      @game.display_game
+      @old_game = false
+    end
+    game_loop
+  end
+
+  def game_loop
     until @guess_correctly == true || @@incorrect_count == 5
       take_player_guess
       check_for_win
     end
     game_over
+  end
+
+  def load_or_new_game
+    puts '
+    [1] New Game
+    [2] Load Game'
+    @input = gets.chomp.to_s
+    case @input
+    when '1'
+      play_game
+    when '2'
+      @old_game = true
+      play_game
+    else
+      puts 'Please enter 1 or 2'
+      @input = gets.chomp.to_s
+    end
   end
 
   def take_player_guess
@@ -150,10 +178,12 @@ class Hangman
       @next_input = true
     when '2'
       load_game
+      @game.display_game
       @next_input = true
     end
   end
 
+  # Player option to save the game in its current state
   def save_game
     Dir.mkdir('save_files') unless Dir.exist?('save_files')
     filename = 'save_files/save.json'
@@ -162,10 +192,30 @@ class Hangman
       file.puts JSON.pretty_generate({ tiles: @game.tiles.to_json,
                                        stick_array: @game.stick_array.to_json,
                                        letter_array: @game.letter_str.to_json,
+                                       display: @game.display.to_json,
                                        incorrect_count: @@incorrect_count.to_json,
                                        used_letter: @used_letter.to_json,
-                                       correct_count: @correct_count.to_json })
+                                       correct_count: @correct_count.to_json, 
+                                       word: @word.to_json })
     end
+    puts 'Saving game...'
+    $stdout.flush
+    sleep(2)
+    @game.display_game
+  end
+
+  def load_game
+    file = File.read('save_files/save.json')
+    save_hash = JSON.parse(file, { symbolize_names: true })
+
+    @game.tiles = JSON.parse(save_hash[:tiles])
+    @game.stick_array = JSON.parse(save_hash[:stick_array])
+    @game.letter_str = JSON.parse(save_hash[:letter_array])
+    @game.display = JSON.parse(save_hash[:display])
+    @@incorrect_count = save_hash[:incorrect_count].to_i
+    @used_letter = JSON.parse(save_hash[:used_letter])
+    @correct_count = save_hash[:correct_count].to_i
+    @word = JSON.parse(save_hash[:word])
   end
 
   def check_letter
@@ -231,11 +281,3 @@ class Hangman
 end
 
 Hangman.new
-# For each letter used by player, it goes through the word array
-# If guessed correctly, replace placeholder with corresponding letter from array
-# Iterate letter count and guesses remaining
-
-# Player lose if used all the number of guess
-# Player win if guessed all the letters of the word correctly
-
-# Player option to save the game in its current state
