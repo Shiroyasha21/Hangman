@@ -2,8 +2,6 @@ Project: Hangman
 
 This project comes from the Ruby Course of The Odin Project's curriculum. The project showcase how to serialize objects and classes using different serialization format, which in this case is JSON. 
 
-I wrote this program after a five month break which caused hardship and confusion throughout writing the program. 
-
 
 How the game works:
   At the start of the game, player would choose whether to start a new game or load a saved state of the game.
